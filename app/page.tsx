@@ -101,13 +101,27 @@ export default function Home() {
         size: responseSize,
       });
     } catch (error: unknown) {
-      const err = error as { message?: string; response?: { data?: unknown } };
+      const err = error as {
+        message?: string;
+        code?: string;
+        response?: { data?: unknown; status?: number };
+        request?: unknown;
+      };
+      const code = err.code || '';
+      const hint =
+        code === 'ERR_NETWORK' || !err.response
+          ? 'Request never reached the server. Common causes: CORS, API down, wrong URL, or VPN/firewall blocking the request.'
+          : code === 'ECONNABORTED'
+            ? 'Request timed out. The API may be slow or unreachable.'
+            : '';
       setResponse({
-        status: 0,
+        status: err.response?.status ?? 0,
         statusText: 'Network Error',
         data: {
           error: err.message || 'Failed to execute request',
-          details: err.response?.data || null,
+          code: code || undefined,
+          hint: hint || undefined,
+          details: err.response?.data ?? null,
         },
         headers: {},
         time: 0,
